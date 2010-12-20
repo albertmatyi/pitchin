@@ -1,0 +1,9 @@
+MIDlet-1: main,/images/icon.gif,main.Main
+MIDlet-Jar-Size: 99130
+MIDlet-Jar-URL: pitchIn.jar
+MIDlet-Name: pitchIn
+MIDlet-Permissions: javax.microedition.media.control.RecordControl
+MIDlet-Vendor: albertSolutions
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.1
+MicroEdition-Profile: MIDP-2.0
