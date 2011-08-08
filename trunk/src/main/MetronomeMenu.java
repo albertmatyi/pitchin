@@ -10,6 +10,7 @@ import javax.microedition.media.MediaException;
 import javax.microedition.media.Player;
 import javax.microedition.media.control.ToneControl;
 
+
 /**
  * @author albertmatyi
  */
@@ -32,6 +33,7 @@ public class MetronomeMenu extends MyMenu {
 		ToneControl.RESOLUTION, 64,
 		ToneControl.SET_VOLUME, 50
 	};
+        private Thread beatThread;
 
 	/**
 	 * constructor
@@ -179,36 +181,22 @@ public class MetronomeMenu extends MyMenu {
 		switch (keyCode) {
 			case -2: { //DOWN
 				this.activeItem++;
-
-
 				if (this.activeItem >= this.items) {
 					this.activeItem = 0;
-
-
 				}
 			}
 			break;
-
-
 			case -1: { //UP
 				this.activeItem--;
-
-
 				if (this.activeItem < 0) {
 					this.activeItem = this.items - 1;
-
-
 				}
 			}
 			break;
-
-
 			case -3: { //LEFT
 				switch (activeItem) {
 					case 0:
 						bpmIdx = Math.max(bpmIdx - 1, 0);
-
-
 						if (bpmIdx < tempoBpms.length - 1) {
 							bpm = (tempoBpms[bpmIdx] + tempoBpms[bpmIdx + 1]) / 2;
 
