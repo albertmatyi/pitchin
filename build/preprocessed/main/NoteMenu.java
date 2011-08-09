@@ -245,8 +245,18 @@ public class NoteMenu extends MyMenu {
 //				System.out.print(chordSequence[i] + " ");
 //		System.out.println("");
 	}
-	private static final String[] chordNames = {"", "m", "+", "ᵒ", "07", "m7", "-Maj7", "7", "+7", "7+5", "Maj7+5", "9", "4",
+	private static final String[] chordNames = {"", "m", "+", "ᵒ", "ᵒ7", "m7", "-Maj7", "7", "+7", "7+5", "Maj7+5", "9", "4",
 		"2", "sus2", "sus4"};
-	private static final int[][] chordNotes = {{4, 7}, {3, 7}, {4, 8}, {3, 6}, {3, 6, 9}, {3, 7, 10}, {3, 7, 11}, {4, 7, 10},
+        private static final int[][] chordNotes = {{4, 7}, {3, 7}, {4, 8}, {3, 6}, {3, 6, 9}, {3, 7, 10}, {3, 7, 11}, {4, 7, 10},
 		{4, 7, 11}, {4, 8, 10}, {4, 8, 11}, {4, 7, 10, 14}, {4, 5, 7}, {4, 7, 14}, {2, 7}, {5, 7}};
+        private static final String[] chordNames2 = { "ᵒ", "m7", "-Maj7", "7", "+7", "7+5", "Maj7+5", "9", "4",
+		"2", "sus2", "sus4"};
+        private static final int[][] chordNotes2 = {{3, 6, 9}, {3, 7, 10}, {3, 7, 11}, {4, 7, 10},
+		{4, 7, 11}, {4, 8, 10}, {4, 8, 11}, {4, 7, 10, 14}, {4, 5, 7}, {4, 7, 14}, {2, 7}, {5, 7}};
+        
+        static{
+            
+        }
+
+
 }
