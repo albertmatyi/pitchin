@@ -24,7 +24,7 @@ public class MetronomeMenu extends MyMenu {
     private static final String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "B", "H"};
     private int activeItem = 0;
     private int items = 3;
-    private static Player player = null;
+    private static Player player = null, ching, click;
     private String toPrint = "";
     private byte[] mySequence = null;
     private static final byte headSequence[] = {
@@ -34,8 +34,7 @@ public class MetronomeMenu extends MyMenu {
         ToneControl.SET_VOLUME, 50
     };
     private final boolean TONE_BEAT = false;
-    private Thread beatThread;
-    private BeatWorker beater;
+    private BeatWorker beatThread;
 
     private void createPlayer() {
         if (TONE_BEAT) {
@@ -48,42 +47,65 @@ public class MetronomeMenu extends MyMenu {
                 e.printStackTrace();
             }
         } else {
-            beater = new BeatWorker();
-            beatThread = new Thread(beater);
-            beatThread.start();
+            try {
+
+                InputStream is = getClass().getResourceAsStream("/sounds/click.wav");
+                click = Manager.createPlayer(is, "audio/X-wav");
+                click.realize();
+                is = getClass().getResourceAsStream("/sounds/ching.wav");
+                ching = Manager.createPlayer(is, "audio/X-wav");
+                ching.realize();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            beatThread = new BeatWorker();
+//            beatThread.start();
         }
         setSequence();
     }
 
-    public class BeatWorker implements Runnable {
+    public class BeatWorker extends Thread {
 
-        private boolean active = true;
-        private Player click, ching;
+        private boolean active = false;
+        private Player ptr;
+        private int time;
 
         public BeatWorker() {
+            time = 60000 / bpm;
             try {
-                InputStream is = getClass().getResourceAsStream("sounds/click.wav");
-                click = Manager.createPlayer(is, "audio/X-wav");
-                is = getClass().getResourceAsStream("sounds/ching.wav");
-                ching = Manager.createPlayer(is, "audio/X-wav");
-            } catch (Exception e) {
-                e.printStackTrace();
+                ching.setMediaTime(time / 3);
+                click.setMediaTime(time / 3);
+            } catch (MediaException me) {
+                me.printStackTrace();
             }
         }
 
         public void run() {
+            int upCntr = 0;
+            active = true;
             while (active) {
                 try {
-                    click.start();
-                    Thread.sleep(100);
-                    click.start();
-                    Thread.sleep(100);
-                    click.start();
-                    Thread.sleep(100);
-                    ching.start();
+                    if (upBeat != 0 && upCntr <= 0) {
+                        ching.start();
+                        ptr = ching;
+                        upCntr = upBeat;
+                    } else {
+                        click.start();
+                        ptr = click;
+                    }
+                    long ctime = System.currentTimeMillis();
+                    while (System.currentTimeMillis() - ctime < time) {
+                        Thread.sleep(100);
+                    }
+                    ptr.stop();
+                    upCntr--;
                 } catch (MediaException me) {
+                    me.printStackTrace();
+                    active = false;
                 } catch (InterruptedException ie) {
                     active = false;
+                    ie.printStackTrace();
+                    return;
                 }
             }
         }
@@ -95,7 +117,6 @@ public class MetronomeMenu extends MyMenu {
 
     private void startPlayer() {
         if (TONE_BEAT) {
-
             try {
                 player.start();
             } catch (MediaException ex) {
@@ -116,6 +137,7 @@ public class MetronomeMenu extends MyMenu {
             }
         } else {
             beatThread.interrupt();
+            beatThread = new BeatWorker();
         }
     }
 
@@ -138,6 +160,7 @@ public class MetronomeMenu extends MyMenu {
         } else {
             if (beatThread.isAlive()) {
                 beatThread.interrupt();
+                beatThread = new BeatWorker();
             } else {
                 beatThread.start();
             }
@@ -148,42 +171,6 @@ public class MetronomeMenu extends MyMenu {
      * constructor
      */
     public MetronomeMenu() {
-    }
-
-    /**
-     * paint
-     */
-    public void paint(Graphics g) {
-
-        super.paint(g);
-
-        GrafX.inputBox(g, GrafX.CENTER_X - 50, GrafX.CENTER_Y - 70, 100);
-        GrafX.inputBox(g, GrafX.CENTER_X - 50, GrafX.CENTER_Y + 0, 100);
-        GrafX.inputBox(g, GrafX.CENTER_X - 50, GrafX.CENTER_Y + 70, 100);
-
-        g.setColor(0x333333);
-
-        Font font = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
-        Font fontb = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL);
-
-        int fh = font.getHeight();
-        g.setFont(font);
-        g.drawString("tempo", GrafX.CENTER_X, GrafX.CENTER_Y - 90 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
-        g.drawString("bpm", GrafX.CENTER_X, GrafX.CENTER_Y - 20 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
-        g.drawString("upBeat", GrafX.CENTER_X, GrafX.CENTER_Y + 50 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
-        g.setFont(fontb);
-        g.drawString(tempoNames[bpmIdx], GrafX.CENTER_X, GrafX.CENTER_Y - 70 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
-        g.drawString("" + bpm, GrafX.CENTER_X, GrafX.CENTER_Y + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
-        g.drawString("" + upBeat, GrafX.CENTER_X, GrafX.CENTER_Y + 70 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
-
-        GrafX.arrows(g, GrafX.CENTER_X - 55, GrafX.CENTER_Y - 70 + this.activeItem * 70, 110);
-
-//		g.setColor(0xffffff);
-        g.setFont(Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_PLAIN, Font.SIZE_SMALL));
-        //TODO g.drawString(player.getState() == player.STARTED ? "STOP" : "START", GrafX.CENTER_X, GrafX.HEIGHT - 7, Graphics.BASELINE | Graphics.HCENTER);
-        g.drawImage(GrafX.autobpmImage, 5, GrafX.HEIGHT - 30, 0);
-
-        printInfo(g);
     }
 
     /**
@@ -348,6 +335,7 @@ public class MetronomeMenu extends MyMenu {
                     player.deallocate();
                 }
             } catch (MediaException mexp) {
+                mexp.printStackTrace();
             }
             createSequence();
             ToneControl tc = (ToneControl) player.getControl("ToneControl");
@@ -360,7 +348,14 @@ public class MetronomeMenu extends MyMenu {
                 }
             }
         } else {
-            //TODO setsequence for thread
+            boolean start = beatThread.isActive();
+            if (start) {
+                beatThread.interrupt();
+            }
+            beatThread = new BeatWorker();
+            if (start) {
+                beatThread.start();
+            }
         }
     }
 
@@ -469,5 +464,46 @@ public class MetronomeMenu extends MyMenu {
 
     public void initialize() {
         createPlayer();
+    }
+
+    /**
+     * paint
+     */
+    public void paint(Graphics g) {
+
+        super.paint(g);
+
+        GrafX.inputBox(g, GrafX.CENTER_X - 50, GrafX.CENTER_Y - 70, 100);
+        GrafX.inputBox(g, GrafX.CENTER_X - 50, GrafX.CENTER_Y + 0, 100);
+        GrafX.inputBox(g, GrafX.CENTER_X - 50, GrafX.CENTER_Y + 70, 100);
+
+        g.setColor(0x333333);
+
+        Font font = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
+        Font fontb = Font.getFont(Font.FACE_SYSTEM, Font.STYLE_BOLD, Font.SIZE_SMALL);
+
+        int fh = font.getHeight();
+        g.setFont(font);
+        g.drawString("tempo", GrafX.CENTER_X, GrafX.CENTER_Y - 90 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
+        g.drawString("bpm", GrafX.CENTER_X, GrafX.CENTER_Y - 20 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
+        g.drawString("upBeat", GrafX.CENTER_X, GrafX.CENTER_Y + 50 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
+        g.setFont(fontb);
+        g.drawString(tempoNames[bpmIdx], GrafX.CENTER_X, GrafX.CENTER_Y - 70 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
+        g.drawString("" + bpm, GrafX.CENTER_X, GrafX.CENTER_Y + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
+        g.drawString("" + upBeat, GrafX.CENTER_X, GrafX.CENTER_Y + 70 + (20 - fh) / 2, Graphics.HCENTER | Graphics.TOP);
+
+        GrafX.arrows(g, GrafX.CENTER_X - 55, GrafX.CENTER_Y - 70 + this.activeItem * 70, 110);
+
+//		g.setColor(0xffffff);
+        g.setFont(Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_PLAIN, Font.SIZE_SMALL));
+
+        if (TONE_BEAT) {
+            g.drawString(player.getState() == player.STARTED ? "STOP" : "START", GrafX.CENTER_X, GrafX.HEIGHT - 7, Graphics.BASELINE | Graphics.HCENTER);
+        } else {
+            g.drawString(beatThread.isActive() ? "STOP" : "START", GrafX.CENTER_X, GrafX.HEIGHT - 7, Graphics.BASELINE | Graphics.HCENTER);
+        }
+        g.drawImage(GrafX.autobpmImage, 5, GrafX.HEIGHT - 30, 0);
+
+        printInfo(g);
     }
 }
