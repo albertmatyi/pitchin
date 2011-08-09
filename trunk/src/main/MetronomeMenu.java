@@ -4,6 +4,7 @@
  */
 package main;
 
+import java.io.InputStream;
 import javax.microedition.lcdui.*;
 import javax.microedition.media.Manager;
 import javax.microedition.media.MediaException;
@@ -34,10 +35,61 @@ public class MetronomeMenu extends MyMenu {
     };
     private final boolean TONE_BEAT = false;
     private Thread beatThread;
+    private BeatWorker beater;
 
     private void createPlayer() {
         if (TONE_BEAT) {
+            try {
+                // Set up this canvas to listen to command events
+                player = Manager.createPlayer(Manager.TONE_DEVICE_LOCATOR);
+                player.setLoopCount(-1);
+                player.realize();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
+            beater = new BeatWorker();
+            beatThread = new Thread(beater);
+            beatThread.start();
+        }
+        setSequence();
+    }
+
+    public class BeatWorker implements Runnable {
+
+        private boolean active = true;
+        private Player click, ching;
+
+        public BeatWorker() {
+            try {
+                InputStream is = getClass().getResourceAsStream("sounds/click.wav");
+                click = Manager.createPlayer(is, "audio/X-wav");
+                is = getClass().getResourceAsStream("sounds/ching.wav");
+                ching = Manager.createPlayer(is, "audio/X-wav");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void run() {
+            while (active) {
+                try {
+                    click.start();
+                    Thread.sleep(100);
+                    click.start();
+                    Thread.sleep(100);
+                    click.start();
+                    Thread.sleep(100);
+                    ching.start();
+                } catch (MediaException me) {
+                } catch (InterruptedException ie) {
+                    active = false;
+                }
+            }
+        }
+
+        public boolean isActive() {
+            return active;
         }
     }
 
@@ -96,15 +148,6 @@ public class MetronomeMenu extends MyMenu {
      * constructor
      */
     public MetronomeMenu() {
-        try {
-            // Set up this canvas to listen to command events
-            player = Manager.createPlayer(Manager.TONE_DEVICE_LOCATOR);
-            player.setLoopCount(-1);
-            player.realize();
-            setSequence();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -296,24 +339,28 @@ public class MetronomeMenu extends MyMenu {
     }
 
     private void setSequence() {
-        boolean start = false;
-        try {
-            if (player.getState() == player.STARTED || player.getState() == player.PREFETCHED) {
-                start = player.getState() == player.STARTED;
-                player.stop();
-                player.deallocate();
-            }
-        } catch (MediaException mexp) {
-        }
-        createSequence();
-        ToneControl tc = (ToneControl) player.getControl("ToneControl");
-        tc.setSequence(mySequence);
-        if (start) {
+        if (TONE_BEAT) {
+            boolean start = false;
             try {
-                player.start();
-            } catch (MediaException ex) {
-                ex.printStackTrace();
+                if (player.getState() == player.STARTED || player.getState() == player.PREFETCHED) {
+                    start = player.getState() == player.STARTED;
+                    player.stop();
+                    player.deallocate();
+                }
+            } catch (MediaException mexp) {
             }
+            createSequence();
+            ToneControl tc = (ToneControl) player.getControl("ToneControl");
+            tc.setSequence(mySequence);
+            if (start) {
+                try {
+                    player.start();
+                } catch (MediaException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        } else {
+            //TODO setsequence for thread
         }
     }
 
@@ -421,6 +468,6 @@ public class MetronomeMenu extends MyMenu {
     }
 
     public void initialize() {
-        setSequence();
+        createPlayer();
     }
 }
