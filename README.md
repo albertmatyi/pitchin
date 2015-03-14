@@ -2,7 +2,7 @@
 
 Is a metronome and tone generator program for mobile phones that support java applications
 
-!(some image)[http://3.bp.blogspot.com/_9omMwgwYGz4/S_q7bJPZULI/AAAAAAAAItU/F5CytSUXrs4/s400/layout.jpg]
+![some image](http://3.bp.blogspot.com/_9omMwgwYGz4/S_q7bJPZULI/AAAAAAAAItU/F5CytSUXrs4/s400/layout.jpg)
 
 ## Features
   * generate tones from A0 to C8
